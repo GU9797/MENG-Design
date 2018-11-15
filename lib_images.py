@@ -1,5 +1,10 @@
 import numpy as np
 import cv2
+import matplotlib.pyplot as plt
+import json
+
+with open('input.json') as f:
+  data = json.load(f)
 
 def write(img,location):
     cv2.imwrite(location,img)
@@ -21,11 +26,15 @@ class Image(object):
         #smooth the image with a bilateral filter
         blur = cv2.bilateralFilter(self.image,9,150,150)
         #turn everything below (limit) to black
-        ret,proc = cv2.threshold(blur,100,255,cv2.THRESH_TOZERO)
+        ret,proc = cv2.threshold(blur,data["pixel_threshold"],255,cv2.THRESH_TOZERO)
         #turn everything above (limit) to white
-        ret,proc = cv2.threshold(proc,180,255,cv2.THRESH_TRUNC)
+        ret,proc = cv2.threshold(proc,data["pixel_threshold"],255,cv2.THRESH_TRUNC)
+        ret,proc = cv2.threshold(proc,data["pixel_threshold"]-10,255,cv2.THRESH_BINARY)
+        self.binary = proc
         #highlight the edges with Canny edge detection
         self.processed_image = cv2.Canny(proc,100,200)
+#        plt.imshow(proc)
+#        plt.show()
         
     def getShapes(self):
         #find shapes in processed (binary) image
@@ -34,19 +43,23 @@ class Image(object):
         #distinguish between "big" shapes
         big_shapes = []
         for shape in self.shapes:
-            if shape.area>100:
+            if shape.area>data["shape_area_pixel_minimum"] and shape.area<data["shape_area_pixel_maximum"] and (shape.h/float(shape.w)) < data["shape_side_ratio_maximum"] and (shape.w/float(shape.h)) < data["shape_side_ratio_maximum"]:
                 big_shapes.append(shape)
         self.big_shapes = big_shapes
 
     def drawShapes(self):
         #draw big shapes over original image
         big_contours = [shape.contour for shape in self.big_shapes]
-        shapes_image = np.copy(self.image)
+        shapes_image = np.copy(self.binary)
+        #shapes_image = np.copy(self.image)
         self.shapes_image = cv2.drawContours(shapes_image, big_contours,  -1, (0,0,255), 1 )
+#        plt.imshow(self.shapes_image)
+#        plt.show()
+        
 
     def splitShapes(self,shapedir):
         #crop each shape
-        shapes_split = [Shape.crop(self.shapes_image) for Shape in self.big_shapes]        
+        shapes_split = [bshape.crop(self.shapes_image) for bshape in self.big_shapes]        
         idx = 0
         for shape in shapes_split:
             idx += 1

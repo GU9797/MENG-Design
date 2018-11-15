@@ -1,7 +1,7 @@
 import numpy as np
 import cv2
 
-im = cv2.imread('./images/playground/pinj50mpacontrast.JPG')
+im = cv2.imread('./images/playground/pinj100mpacontrast.jpg')
 '''
 ret,thresh = cv2.threshold(im,127,255,0)
 image, contours, hierarchy = cv2.findContours(thresh,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
@@ -23,4 +23,4 @@ for contour in contours:
 cv2.drawContours(im, contour_mlist,  -1, (0,0,255), 2)
 #cv2.drawContours(im, contour_slist,  -1, (255,0,0), 2)
 cv2.imshow('Objects Detected',im)
-cv2.imwrite('./images/playground/pinj50mpashapes.JPG',im)
+cv2.imwrite('./images/playground/pinj100mpashapes.jpg',im)

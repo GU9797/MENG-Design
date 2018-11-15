@@ -1,11 +1,28 @@
 from lib_images import *
 from lib_clustering import *
+import os
+import sys
+import json
 
-img_dir = "/Users/kevinslater/MENG/images/"
-img_names = ["jet30mpa-1.jpg"]#,"jet50mpa-1.jpg","jet100mpa-1.jpg"]
+with open('input.json') as f:
+  data = json.load(f)
+
+# --------------------------------------------
+# uncomment this block to delete all existing
+# analyzed data (like from past attempts)
+# --------------------------------------------
+os.system("rm %s*"%(data["shape_dir_name"]))
+os.system("rm -r %s*"%(data["label_dir_name"]))
+for i in range(data["num_kmeans_clusters"]):
+  os.chdir(data["label_dir_name"])
+  os.system("mkdir %s"%(i))
+  os.chdir("..")
+
+img_dir = data["img_dir"]
+img_names = data["img_names"]
 img_locs = [img_dir+name for name in img_names]
-shape_dir = "./bigsplits/"
-label_dir = "./labeltest/"
+shape_dir = data["shape_dir_name"]
+label_dir = data["label_dir_name"]
 all_shapes = []
 all_imgs = []
 
@@ -15,7 +32,7 @@ for loc in img_locs:
     all_shapes = np.concatenate((all_shapes,img.big_shapes))
     img.splitShapes(shape_dir)
 
-ret,label,center = kmeans(all_shapes,6)
+ret,label,center = kmeans(all_shapes,data["num_kmeans_clusters"])
 
 for img in all_imgs:
     img.writeLabels(label_dir)

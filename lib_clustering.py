@@ -12,7 +12,7 @@ def maxdim(shapes):
             maxw = shape.w
     return(maxh,maxw)
 
-def kmeans(shapes,k=2):
+def kmeans(shapes,k=4):
     #prepare shapes
     maxh,maxw = maxdim(shapes)
     for shape in shapes:
