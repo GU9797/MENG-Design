@@ -32,4 +32,5 @@ ALL INPUT DATA SHOULD BE CHANGED IN INPUT.JSON
   shape_area_pixel_minimum: minimum value of shape area, in pixels
   shape_area_pixel_maximum: maximum value of shape area, in pixels
   num_kmeans_clusters:  number of kmeans clusters
+  Otsu: 1 for Otsu thresholding, any other number for manual thresholding
 -----------------------------------------------------------------------------
