@@ -20,22 +20,28 @@ class Image(object):
 
     def readImage(self):
         #read image as 3d array
-        self.image = cv2.imread(self.location)
+        if data["Otsu"] == 1:
+            self.image = cv2.imread(self.location, 0)
+        else:
+            self.image = cv2.imread(self.location)
 
     def process(self):
         #smooth the image with a bilateral filter
         blur = cv2.bilateralFilter(self.image,9,150,150)
         #turn everything below (limit) to black
-        ret,proc = cv2.threshold(blur,data["pixel_threshold"],255,cv2.THRESH_TOZERO)
-        #turn everything above (limit) to white
-        ret,proc = cv2.threshold(proc,data["pixel_threshold"],255,cv2.THRESH_TRUNC)
-        ret,proc = cv2.threshold(proc,data["pixel_threshold"]-10,255,cv2.THRESH_BINARY)
+        if data["Otsu"] == 1:
+            ret,proc = cv2.threshold(blur,0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
+        else:
+            ret,proc = cv2.threshold(blur,data["pixel_threshold"],255,cv2.THRESH_TOZERO)
+            #turn everything above (limit) to white
+            ret,proc = cv2.threshold(proc,data["pixel_threshold"],255,cv2.THRESH_TRUNC)
+            ret,proc = cv2.threshold(proc,data["pixel_threshold"]-10,255,cv2.THRESH_BINARY)
         self.binary = proc
         #highlight the edges with Canny edge detection
         self.processed_image = cv2.Canny(proc,100,200)
-#        plt.imshow(proc)
-#        plt.show()
-        
+        plt.imshow(proc)
+        plt.show()
+
     def getShapes(self):
         #find shapes in processed (binary) image
         _, contours, _ = cv2.findContours(self.processed_image, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
@@ -44,6 +50,7 @@ class Image(object):
         big_shapes = []
         for shape in self.shapes:
             if shape.area>data["shape_area_pixel_minimum"] and shape.area<data["shape_area_pixel_maximum"] and (shape.h/float(shape.w)) < data["shape_side_ratio_maximum"] and (shape.w/float(shape.h)) < data["shape_side_ratio_maximum"]:
+                #if cv2.isContourConvex(shape.contour) == True: #checks if contour is closed (commented bc it removes vast majority of shapes)
                 big_shapes.append(shape)
         self.big_shapes = big_shapes
 
@@ -55,11 +62,11 @@ class Image(object):
         self.shapes_image = cv2.drawContours(shapes_image, big_contours,  -1, (0,0,255), 1 )
 #        plt.imshow(self.shapes_image)
 #        plt.show()
-        
+
 
     def splitShapes(self,shapedir):
         #crop each shape
-        shapes_split = [bshape.crop(self.shapes_image) for bshape in self.big_shapes]        
+        shapes_split = [bshape.crop(self.shapes_image) for bshape in self.big_shapes]
         idx = 0
         for shape in shapes_split:
             idx += 1
@@ -83,31 +90,38 @@ class Shape(object):
         self.getArea()
         self.getApprox()
         self.getBoundary()
-    
+
     def getArea(self):
         self.area = cv2.contourArea(self.contour)
 
     def getApprox(self):
         self.approx = cv2.approxPolyDP(self.contour,0.01*cv2.arcLength(self.contour,True),True)
 
-    def getBoundary(self): 
+    def getBoundary(self):
         x,y,w,h = cv2.boundingRect(self.contour)
         self.h = h #height
         self.w = w #width
         self.boundary = [y,y+h,x,x+w]
 
     def crop(self,parent):
-        self.cropped = parent[self.boundary[0]:self.boundary[1],self.boundary[2]:self.boundary[3]]
+        peri = cv2.arcLength(self.contour, True)
+        approx = cv2.approxPolyDP(self.contour, 0.02 * peri, True)
+        canvas = np.zeros(parent.shape) # create a single channel pixel black image
+        fill = cv2.fillPoly(canvas, pts =[self.contour], color=(255,255,255))
+        self.cropped = fill[self.boundary[0]:self.boundary[1],self.boundary[2]:self.boundary[3]]
         return(self.cropped)
 
     def pad(self,maxh,maxw):
         #pad to make all cropped images the same size before clustering
-        self.padded = np.pad(self.cropped,((0, maxh - self.h), (0, maxw - self.w),(0,0)), 'constant', constant_values=0)
+        if data["Otsu"] == 1:
+            self.padded = np.pad(self.cropped,((0, maxh - self.h), (0, maxw - self.w)), 'constant', constant_values=0)
+        else:
+            self.padded = np.pad(self.cropped,((0, maxh - self.h), (0, maxw - self.w),(0,0)), 'constant', constant_values=0)
 
     def flatten(self):
         #when clustering, each shape is represented as a single row of values
         #only flatten AFTER padding
         self.flat = np.ndarray.flatten(self.padded)
- 
+
     def setLabel(self,label):
         self.label = label

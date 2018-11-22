@@ -1,13 +1,13 @@
 {
   "_comment": "see README for descriptions",
-	"img_dir" : "",
-	"img_names" : ["image.jpg"],
+	"img_dir" : "./images/playground/",
+	"img_names" : ["pinj30mpa.jpg", "pinj50mpa.jpg"],
   "shape_dir_name" : "./bigsplits/",
   "label_dir_name" : "./labeltest/",
 	"pixel_threshold": 80,
-	"shape_area_pixel_minimum": 100,
+	"shape_area_pixel_minimum": 10,
 	"shape_area_pixel_maximum": 400,
 	"shape_side_ratio_maximum": 3.45,
-  "num_kmeans_clusters": 8
+  "num_kmeans_clusters": 8,
+  "Otsu": 0
 }
-

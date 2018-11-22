@@ -1,6 +1,8 @@
 import numpy as np
 import cv2
 from lib_images import *
+import matplotlib.pyplot as plt
+from sklearn.cluster import KMeans
 
 def maxdim(shapes):
     maxh = 0
@@ -19,12 +21,30 @@ def kmeans(shapes,k=4):
         shape.pad(maxh,maxw)
         shape.flatten()
     rows = [shape.flat for shape in shapes]
- 
+
     Z = np.stack(rows)
     Z = np.float32(Z)
-    criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 10, 1.0)    
+
+    '''
+    Elbow Method:
+    Sum_of_squared_distances = []
+    K = range(1,15)
+    for k in K:
+        km = KMeans(n_clusters=k)
+        km = km.fit(Z)
+        Sum_of_squared_distances.append(km.inertia_)
+
+    plt.figure()
+    plt.plot(K, Sum_of_squared_distances, 'bx-')
+    plt.xlabel('k')
+    plt.ylabel('Sum_of_squared_distances')
+    plt.title('Elbow Method For Optimal k')
+    plt.show()
+    '''
+
+    criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 10, 1.0)
     ret,label,center=cv2.kmeans(Z,k,None,criteria,10,cv2.KMEANS_RANDOM_CENTERS)
-   
+
     #assign a label to each shape
     for i in range(len(shapes)):
         shapes[i].setLabel(label[i])
