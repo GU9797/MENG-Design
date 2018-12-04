@@ -43,7 +43,7 @@ class Image(object):
 
     def getShapes(self):
         #find shapes in processed (binary) image
-        hierarchy, contours, _ = cv2.findContours(self.processed_image, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        hierarchy, contours, _ = cv2.findContours(self.processed_image, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         self.shapes = [Shape(contour) for contour in contours]
         #distinguish between "big" shapes
         big_shapes = []
