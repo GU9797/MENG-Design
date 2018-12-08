@@ -2,12 +2,21 @@ import numpy as np
 import cv2
 import matplotlib.pyplot as plt
 import json
+import colorsys
 
 with open('input.json') as f:
   data = json.load(f)
 
 def write(img,location):
     cv2.imwrite(location,img)
+
+def HSVToRGB(h, s, v):
+    (r, g, b) = colorsys.hsv_to_rgb(h, s, v)
+    return (int(255*r), int(255*g), int(255*b))
+ 
+def getDistinctColors(n):
+    huePartition = 1.0 / (n + 1)
+    return (HSVToRGB(huePartition * value, 1.0, 1.0) for value in range(0, n))
 
 class Image(object):
 
@@ -38,8 +47,8 @@ class Image(object):
         #highlight the edges with Canny edge detection,may want to play around with upper/lower boundaries so edges are closed
         self.processed_image = cv2.Canny(proc,100,200)
         self.processed_image = proc
-        plt.imshow(proc)
-        plt.show()
+        #plt.imshow(proc)
+        #plt.show()
 
     def getShapes(self):
         #find shapes in processed (binary) image
@@ -80,6 +89,22 @@ class Image(object):
             name = self.location[-5] + "_" + str(len(self.big_shapes))+ "_" + str(idx)
             loc = target+str(shape.label[0])+"/"+name+".jpg"
             write(shape.cropped, loc)
+
+    def drawLabels(self):
+        clusters_image = np.copy(self.image)
+        clusters_image = cv2.cvtColor(clusters_image, cv2.COLOR_GRAY2RGB) #change back to RGB for easier visualization
+
+        k = np.amax([shape.label[0] for shape in self.big_shapes])+1 
+        cluster_contours = [[] for i in range(k)]
+        colors = getDistinctColors(k)
+
+        for shape in self.big_shapes:
+            cluster_contours[shape.label[0]].append(shape.contour)
+        
+        for i in range(len(cluster_contours)):
+            clusters_image = cv2.drawContours(clusters_image,cluster_contours[i],-1,next(colors),3)
+        
+        self.clusters_image = clusters_image
 
 class Shape(object):
 
