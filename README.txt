@@ -1,6 +1,31 @@
 -----------------------------------------------------------------------------
+PAST COMMIT, NEXT STEPS
+-----------------------------------------------------------------------------
+done on last commit:
+- rotate image
+    - Prints out shapes with direction of acceleration along horizontal
+      (just generally easier to visualize)
+    - I did this arbitrarily, since the nozzle is in the same place for all
+      our images.  We probably want to use edge to detection to generalize
+      this eventually
+        - arbitrary angle is at top of lib_images.py, if you want to change it
+- added write_json.py
+    - So you don't have to write out all the file names in the image directory
+    - CHANGE INPUT VALUES HERE
+   
+In my opinion, logical next steps:
+- Separate by size before applying kmeans
+- kmeans elbow method?
+- adaptive thresholding, or some other method of separating 'big shapes'
+-----------------------------------------------------------------------------
+
+
+-----------------------------------------------------------------------------
 COMMANDS
 -----------------------------------------------------------------------------
+python write_json.py
+    write json file used by labels.py
+
 python labels.py
     Preprocess image, perform kmeans clustering
 -----------------------------------------------------------------------------
@@ -9,6 +34,8 @@ python labels.py
 -----------------------------------------------------------------------------
 FILES
 -----------------------------------------------------------------------------
+  write_json.py
+      writes input.json; ideally the only front-end file
   input.json
       contains all variable values
   labels.py
@@ -21,7 +48,7 @@ FILES
 
 
 -----------------------------------------------------------------------------
-ALL INPUT DATA SHOULD BE CHANGED IN INPUT.JSON
+ALL INPUT DATA SHOULD BE CHANGED IN WRITE_JSON.PY (which prints input.json)
 -----------------------------------------------------------------------------
   img_dir:  directory containing input image files
   img_names:  original image file names

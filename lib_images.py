@@ -4,6 +4,31 @@ import matplotlib.pyplot as plt
 import json
 import colorsys
 
+angle = -20
+
+# ----------------------------------------------
+# ROTATE IMAGE
+# ----------------------------------------------
+def rotate_image(img, ang):
+  h,w = img.shape[:2]
+  image_center = (w/2,h/2)
+
+  rotation_mat = cv2.getRotationMatrix2D(image_center,ang,1.)
+
+  abs_cos = abs(rotation_mat[0,0])
+  abs_sin = abs(rotation_mat[0,1])
+
+  bound_w = int(h*abs_sin + w*abs_cos)
+  bound_h = int(h*abs_cos + w*abs_sin)
+
+  rotation_mat[0,2] += bound_w/2 - image_center[0]
+  rotation_mat[1,2] += bound_h/2 - image_center[1]
+
+  return cv2.warpAffine(img, rotation_mat, (bound_w, bound_h))
+# ----------------------------------------------
+# ----------------------------------------------
+
+
 with open('input.json') as f:
   data = json.load(f)
 
@@ -30,6 +55,8 @@ class Image(object):
     def readImage(self):
         #read image as 2d array (grayscale)
         self.image = cv2.imread(self.location, 0)
+        self.image = rotate_image(self.image,angle)
+
 
     def process(self):
         #smooth the image with a bilateral filter
@@ -44,22 +71,31 @@ class Image(object):
             ret,proc = cv2.threshold(proc,data["pixel_threshold"]-10,255,cv2.THRESH_BINARY)
         self.binary = proc
 
-        #highlight the edges with Canny edge detection,may want to play around with upper/lower boundaries so edges are closed
+        #highlight the edges with Canny edge detection,may want to play around
+        #with upper/lower boundaries so edges are closed
         self.processed_image = cv2.Canny(proc,100,200)
         self.processed_image = proc
+        cv2.imwrite("binary.jpg",proc)
         #plt.imshow(proc)
         #plt.show()
 
     def getShapes(self):
         #find shapes in processed (binary) image
-        #RETR_EXTERNAL worked on 30mpa image but not 100mpa? Should prevent finding duplicate shapes
-        hierarchy, contours, _ = cv2.findContours(self.processed_image, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        #RETR_EXTERNAL worked on 30mpa image but not 100mpa? Should prevent 
+        #finding duplicate shapes
+        hierarchy, contours, _ = cv2.findContours(self.processed_image, cv2.RETR_TREE,\
+                                cv2.CHAIN_APPROX_SIMPLE)
         self.shapes = [Shape(contour) for contour in contours]
         #distinguish between "big" shapes
         big_shapes = []
         for shape in self.shapes:
-            if shape.area>data["shape_area_pixel_minimum"] and shape.area<data["shape_area_pixel_maximum"] and (shape.h/float(shape.w)) < data["shape_side_ratio_maximum"] and (shape.w/float(shape.h)) < data["shape_side_ratio_maximum"]:
-                #if cv2.isContourConvex(shape.contour) == True: #checks if contour is closed (commented bc it removes vast majority of shapes)
+            if shape.area>data["shape_area_pixel_minimum"] and \
+              shape.area<data["shape_area_pixel_maximum"] and \
+              (shape.h/float(shape.w)) < data["shape_side_ratio_maximum"] and \
+              (shape.w/float(shape.h)) < data["shape_side_ratio_maximum"]:
+                #checks if contour is closed (commented bc it removes vast
+                #majority of shapes)
+                #if cv2.isContourConvex(shape.contour) == True: 
                 big_shapes.append(shape)
         self.big_shapes = big_shapes
 
@@ -68,8 +104,9 @@ class Image(object):
         big_contours = [shape.contour for shape in self.big_shapes]        
         #shapes_image = np.copy(self.binary)
         shapes_image = np.copy(self.image)
-        shapes_image = cv2.cvtColor(shapes_image, cv2.COLOR_GRAY2RGB) #change back to RGB for easier visualization
-        self.shapes_image = cv2.drawContours(shapes_image, big_contours,  -1, (0,0,255), 1 )
+        #change back to RGB for easier visualization
+        shapes_image = cv2.cvtColor(shapes_image, cv2.COLOR_GRAY2RGB)
+        self.shapes_image = cv2.drawContours(shapes_image, big_contours, -1, (0,0,255), 1 )
         #plt.imshow(self.shapes_image)
         #plt.show()
 
@@ -92,7 +129,8 @@ class Image(object):
 
     def drawLabels(self):
         clusters_image = np.copy(self.image)
-        clusters_image = cv2.cvtColor(clusters_image, cv2.COLOR_GRAY2RGB) #change back to RGB for easier visualization
+        #change back to RGB for easier visualization
+        clusters_image = cv2.cvtColor(clusters_image, cv2.COLOR_GRAY2RGB)
 
         k = np.amax([shape.label[0] for shape in self.big_shapes])+1 
         cluster_contours = [[] for i in range(k)]
@@ -102,7 +140,8 @@ class Image(object):
             cluster_contours[shape.label[0]].append(shape.contour)
         
         for i in range(len(cluster_contours)):
-            clusters_image = cv2.drawContours(clusters_image,cluster_contours[i],-1,next(colors),3)
+            clusters_image = cv2.drawContours(clusters_image,cluster_contours[i],-1,\
+                            next(colors),3)
         
         self.clusters_image = clusters_image
 
@@ -119,7 +158,8 @@ class Shape(object):
         self.area = cv2.contourArea(self.contour)
 
     def getApprox(self):
-        self.approx = cv2.approxPolyDP(self.contour,0.01*cv2.arcLength(self.contour,True),True)
+        self.approx = cv2.approxPolyDP(self.contour,0.01*\
+                      cv2.arcLength(self.contour,True),True)
 
     def getBoundary(self):
         x,y,w,h = cv2.boundingRect(self.contour)
@@ -129,19 +169,28 @@ class Shape(object):
 
     def crop(self,parent):
         peri = cv2.arcLength(self.contour, True)
-        approx = cv2.approxPolyDP(self.contour, 0.02 * peri, True) #approximate shape of contour
-        canvas = np.zeros(parent.shape).astype(parent.dtype) + 255 # create a single channel pixel white image
+        #approximate shape of contour
+        approx = cv2.approxPolyDP(self.contour, 0.02 * peri, True)
+        # create a single channel pixel white image
+        canvas = np.zeros(parent.shape).astype(parent.dtype) + 255
         fill = cv2.fillPoly(canvas, pts =[self.contour], color=0)
-        anti_fill = cv2.bitwise_or(parent,fill) #keep shape in grayscale, turn background white
-        self.cropped = anti_fill[self.boundary[0]:self.boundary[1],self.boundary[2]:self.boundary[3]]
-        #also crop to slightly larger than boundary so shape isn't right at the edge of the image
+        #keep shape in grayscale, turn background white
+        anti_fill = cv2.bitwise_or(parent,fill)
+        self.cropped = anti_fill[self.boundary[0]:self.boundary[1],\
+                      self.boundary[2]:self.boundary[3]]
+        #also crop to slightly larger than boundary so shape isn't right at 
+        #the edge of the image
         #this will be useful if we want to draw more contours on a shape after cropping it
         self.border = 2
-        self.bordered = anti_fill[self.boundary[0]-self.border:self.boundary[1]+self.border,self.boundary[2]-self.border:self.boundary[3]+self.border]
+        self.bordered = anti_fill[self.boundary[0]-\
+                        self.border:self.boundary[1]+\
+                        self.border,self.boundary[2]-\
+                        self.border:self.boundary[3]+self.border]
         return(self.cropped)
 
     def pad(self,maxh,maxw):
-        self.padded = np.pad(self.cropped,((0, maxh - self.h), (0, maxw - self.w)), 'constant', constant_values=0)
+        self.padded = np.pad(self.cropped,((0, maxh - self.h), \
+                      (0, maxw - self.w)), 'constant', constant_values=0)
 
     def flatten(self):
         #when clustering, each shape is represented as a single row of values

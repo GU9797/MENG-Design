@@ -152,7 +152,7 @@
 		"Ratio000275.tif",
 		"Ratio000204.tif",
 		"Ratio000258.tif",
-		"Ratio000248.tif"
+		"Ratio000248.tif",
 		],
 	"shape_dir_name" : "./bigsplits/",
 	"label_dir_name" : "./labeltest/",
@@ -160,6 +160,6 @@
 	"shape_area_pixel_minimum": 10,
 	"shape_area_pixel_maximum": 400,
 	"shape_side_ratio_maximum": 3.45,
-	"num_kmeans_clusters": 20,
+	"num_kmeans_clusters": 8,
 	"Otsu": 0
 }
