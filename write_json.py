@@ -1,17 +1,21 @@
 import os
 
 dir_name = "images/"
-thresh = 80  #pixel_threshold
-sapmin = 10  #shape_area_pixel_minimum
-sapmax = 400 #shape_area_pixel_maximum
-ssrm = 3.45  #shape_side_ratio_maximum
-nkc = 20     #num_kmeans_clusters
+thresh = 80    #pixel_threshold
+sapmin = 10    #shape_area_pixel_minimum
+sapmax = 400   #shape_area_pixel_maximum
+ssrm = 3.45    #shape_side_ratio_maximum
+nkc = 20       #num_kmeans_clusters
+common_len = 7 #for shape image label purposes:
+                #number of letters to chop off of beginning of
+                #image labels to avoid huge shape labels
 
 num_files = len(os.listdir("./" + dir_name))
 
 with open("input.json",'w') as l:
   l.write('{\n\t"comment" : "see README for descriptions",\n')
   l.write('\t"img_dir" : "' + dir_name + '",\n')
+  l.write('\t"label_common_length" : ' + str(common_len) + ',\n')
   l.write('\t"img_names": [\n')
   n = 1
   for f in os.listdir("./" + dir_name):

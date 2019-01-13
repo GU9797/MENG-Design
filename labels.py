@@ -11,16 +11,18 @@ with open('input.json') as f:
 # uncomment this block to delete all existing
 # analyzed data (like from past attempts)
 # --------------------------------------------
-'''
+#'''
 #For Linux Users:
 os.system("rm %s*"%(data["shape_dir_name"]))
 os.system("rm -r %s*"%(data["label_dir_name"]))
+os.system("rm -r %s"%("binary"))
 for i in range(data["num_kmeans_clusters"]):
   os.chdir(data["label_dir_name"])
   os.system("mkdir %s"%(i))
   os.chdir("..")
-'''
+os.system("mkdir %s"%("binary"))
 #'''
+'''
 #For Windows Users:
 if (os.path.isdir(data["shape_dir_name"]) == True) and (os.path.isdir(data["label_dir_name"]) == True):
     os.system("rmdir {} /s".format(data["shape_dir_name"][2:-1]))
@@ -33,13 +35,14 @@ os.chdir(data["label_dir_name"])
 for i in range(data["num_kmeans_clusters"]):
   os.system("mkdir %s"%(i))
 os.chdir("..")
-#'''
+'''
 
 img_dir = data["img_dir"]
 img_names = data["img_names"]
 img_locs = [img_dir+name for name in img_names]
 shape_dir = data["shape_dir_name"]
 label_dir = data["label_dir_name"]
+common_len = data["label_common_length"]
 all_shapes = []
 all_imgs = []
 

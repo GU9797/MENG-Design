@@ -3,6 +3,8 @@ import cv2
 import matplotlib.pyplot as plt
 import json
 import colorsys
+import os
+import sys
 
 angle = -20
 
@@ -28,7 +30,6 @@ def rotate_image(img, ang):
 # ----------------------------------------------
 # ----------------------------------------------
 
-
 with open('input.json') as f:
   data = json.load(f)
 
@@ -51,6 +52,8 @@ class Image(object):
         self.process()
         self.getShapes()
         self.drawShapes()
+        #converts image lables to shape labels
+        self.front_index = int(location.find("/")) + int(data["label_common_length"])
 
     def readImage(self):
         #read image as 2d array (grayscale)
@@ -75,7 +78,12 @@ class Image(object):
         #with upper/lower boundaries so edges are closed
         self.processed_image = cv2.Canny(proc,100,200)
         self.processed_image = proc
-        cv2.imwrite("binary.jpg",proc)
+
+        os.chdir("binary")
+        cv2.imwrite("binary_"+str(self.location)[7:-4]+".jpg",proc)
+        #print(self.location[7:-4])
+        os.chdir("..")
+
         #plt.imshow(proc)
         #plt.show()
 
@@ -116,14 +124,17 @@ class Image(object):
         idx = 0
         for shape in shapes_split:
             idx += 1
-            name = self.location[-5] + "_" + str(len(self.big_shapes))+ "_" + str(idx)
+            name = self.location[self.front_index:-4] + "_" + \
+                    str(len(self.big_shapes))+ "_" + str(idx)
+            #print(name)
             write(shape,shapedir+name+".jpg")
 
     def writeLabels(self,target):
         idx = 0
         for shape in self.big_shapes:
             idx+=1
-            name = self.location[-5] + "_" + str(len(self.big_shapes))+ "_" + str(idx)
+            name = self.location[self.front_index:-4] + "_" + \
+                    str(len(self.big_shapes))+ "_" + str(idx)
             loc = target+str(shape.label[0])+"/"+name+".jpg"
             write(shape.cropped, loc)
 

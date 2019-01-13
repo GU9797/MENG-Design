@@ -2,6 +2,10 @@
 PAST COMMIT, NEXT STEPS
 -----------------------------------------------------------------------------
 done on last commit:
+- print all binary images to new directory
+- reconfigured automated shape labeling
+
+done on second to last commit:
 - rotate image
     - Prints out shapes with direction of acceleration along horizontal
       (just generally easier to visualize)
@@ -51,6 +55,8 @@ FILES
 ALL INPUT DATA SHOULD BE CHANGED IN WRITE_JSON.PY (which prints input.json)
 -----------------------------------------------------------------------------
   img_dir:  directory containing input image files
+  label_common_length:  number of characters conserved at beginning of all image
+                    labels, chopped off at beginning of shape label 
   img_names:  original image file names
   shape_dir_name: directory to put all shape images
   label_dir_name: directory to put all shape images, separated by kmeans clusters
