@@ -16,20 +16,25 @@ with open('input.json') as f:
 os.system("rm %s*"%(data["shape_dir_name"]))
 os.system("rm -r %s*"%(data["label_dir_name"]))
 os.system("rm -r %s"%("binary"))
+
+os.system("mkdir %s"%(data["shape_dir_name"][2:-1]))
+os.system("mkdir %s"%(data["label_dir_name"]))
+os.system("mkdir %s"%("binary"))
 for i in range(data["num_kmeans_clusters"]):
   os.chdir(data["label_dir_name"])
   os.system("mkdir %s"%(i))
   os.chdir("..")
-os.system("mkdir %s"%("binary"))
 #'''
 '''
 #For Windows Users:
 if (os.path.isdir(data["shape_dir_name"]) == True) and (os.path.isdir(data["label_dir_name"]) == True):
     os.system("rmdir {} /s".format(data["shape_dir_name"][2:-1]))
     os.system("rmdir {} /s".format(data["label_dir_name"][2:-1]))
+    os.system("rmdir {} /s".format("binary"))
 
 os.system("mkdir {}".format(data["shape_dir_name"][2:-1]))
 os.system("mkdir {}".format(data["label_dir_name"][2:-1]))
+os.system("mkdir {}".format("binary"))
 
 os.chdir(data["label_dir_name"])
 for i in range(data["num_kmeans_clusters"]):
