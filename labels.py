@@ -51,6 +51,33 @@ common_len = data["label_common_length"]
 all_shapes = []
 all_imgs = []
 
+#run kmeans on the first few images and average the clusters to get the threshold value
+if data["kthresh"] != 0:
+    center1 = [] #darkest cluster
+    center2 = [] #next darkest cluster
+    total = 10
+    for loc in img_locs[:total]:
+        img = Image(loc)
+        min_center = min(img.center)[0]
+        min2_center = min(img.center[img.center != min(img.center)])
+        print(img.center)
+        print(min_center)
+        print(min2_center)
+        center1.append(min_center)
+        center2.append(min2_center)
+    center1 = np.median(center1)
+    center2 = np.median(center2)
+    #thresh_val = (center1 + center2)/2
+    thresh_val = center2
+    print(thresh_val)
+    data["pixel_threshold"] = thresh_val
+    data["kthresh"] = 0         
+    with open('input.json','w') as f:
+        json.dump(data,f,indent=4)
+
+with open('input.json') as f:
+  data = json.load(f)
+
 for loc in img_locs:
     img = Image(loc)
     all_imgs.append(img)
@@ -61,3 +88,5 @@ ret,label,center = kmeans(all_shapes,data["num_kmeans_clusters"])
 
 for img in all_imgs:
     img.writeLabels(label_dir)
+    img.drawLabels()
+    write(img.clusters_image,"./clusters/"+img.location[7:-4]+".jpg")

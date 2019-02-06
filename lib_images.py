@@ -22,7 +22,6 @@ def rotate_image(img, ang):
 
   bound_w = int(h*abs_sin + w*abs_cos)
   bound_h = int(h*abs_cos + w*abs_sin)
-
   rotation_mat[0,2] += bound_w/2 - image_center[0]
   rotation_mat[1,2] += bound_h/2 - image_center[1]
 
@@ -57,21 +56,43 @@ class Image(object):
 
     def readImage(self):
         #read image as 2d array (grayscale)
-        self.image = cv2.imread(self.location, 0)
-        self.image = rotate_image(self.image,angle)
+        self.image = cv2.imread(self.location, -1)
+        #self.image = rotate_image(self.image,angle)
 
 
     def process(self):
+        
+        with open('input.json') as f:
+            data = json.load(f)
+
         #smooth the image with a bilateral filter
         blur = cv2.bilateralFilter(self.image,9,150,150)
         #turn everything below (limit) to black
         if data["Otsu"] == 1:
             ret,proc = cv2.threshold(blur,0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
+        elif data["kthresh"] != 0:
+            #get threshold value from kmeans clustering with k=kthresh
+            Z = self.image.reshape((-1,1))
+            Z = np.float32(Z)
+            criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 10, 1.0)
+            ret,label,center=cv2.kmeans(Z,data["kthresh"],None,criteria,10,cv2.KMEANS_RANDOM_CENTERS)
+ 
+            # Now convert back into uint8, and make original image
+            center = np.uint8(center)
+            self.center = center
+            res = center[label.flatten()]
+            self.kthreshed = res.reshape((self.image.shape))
+            thresh_val = min(center)[0]
+            print("kmeans threshold with "+str(thresh_val))            
+            #now threshold the k-means clustered image to only keep the darkest cluster
+            ret,proc = cv2.threshold(self.kthreshed,thresh_val,255,cv2.THRESH_BINARY)
         else:
+            print("threshold with " + str(data["pixel_threshold"]))
             ret,proc = cv2.threshold(blur,data["pixel_threshold"],255,cv2.THRESH_TOZERO)
             #turn everything above (limit) to white
             ret,proc = cv2.threshold(proc,data["pixel_threshold"],255,cv2.THRESH_TRUNC)
-            ret,proc = cv2.threshold(proc,data["pixel_threshold"]-10,255,cv2.THRESH_BINARY)
+            ret,proc = cv2.threshold(self.image,data["pixel_threshold"]-10,255,cv2.THRESH_BINARY)
+        
         self.binary = proc
 
         #highlight the edges with Canny edge detection,may want to play around
@@ -80,12 +101,9 @@ class Image(object):
         self.processed_image = proc
 
         os.chdir("binary")
-        cv2.imwrite("binary_"+str(self.location)[7:-4]+".jpg",proc)
+        cv2.imwrite("binary_avg_"+str(self.location)[7:-4]+".jpg",proc)
         #print(self.location[7:-4])
         os.chdir("..")
-
-        #plt.imshow(proc)
-        #plt.show()
 
     def getShapes(self):
         #find shapes in processed (binary) image
@@ -111,7 +129,7 @@ class Image(object):
         #draw big shapes over original image (or binary image)
         big_contours = [shape.contour for shape in self.big_shapes]        
         #shapes_image = np.copy(self.binary)
-        shapes_image = np.copy(self.image)
+        shapes_image = cv2.imread("../T2_rescaled/1.tif",-1) #np.copy(self.image)
         #change back to RGB for easier visualization
         shapes_image = cv2.cvtColor(shapes_image, cv2.COLOR_GRAY2RGB)
         self.shapes_image = cv2.drawContours(shapes_image, big_contours, -1, (0,0,255), 1 )
@@ -152,7 +170,7 @@ class Image(object):
         
         for i in range(len(cluster_contours)):
             clusters_image = cv2.drawContours(clusters_image,cluster_contours[i],-1,\
-                            next(colors),3)
+                            next(colors),1)
         
         self.clusters_image = clusters_image
 
