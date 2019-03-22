@@ -10,8 +10,8 @@ from lib_clustering import maxdim
 
 def overlay(all_shapes):
     '''
-    Takes as input all_shapes variable from labels.py
-    Outputs overlayed plots
+    Takes as input all_shape variables from run.py
+    Outputs overlayed plots (representative shapes of kmeans clusters)
     '''
     #Separating shapes with different labels
     shapes0 = [shapes for shapes in all_shapes if shapes.label == 0]
@@ -29,7 +29,8 @@ def overlay(all_shapes):
             #padding to make all images the same dimension
             padh = (maxh - h) / 2
             padw = (maxw - w) / 2
-            padshape = np.pad(shape.cropped, ((math.floor(padh), math.ceil(padh)), (math.floor(padw), math.ceil(padw))), 'constant', constant_values = 255)
+            padshape = np.pad(shape.cropped, ((math.floor(padh), math.ceil(padh)), \
+                (math.floor(padw), math.ceil(padw))), 'constant', constant_values = 255)
             #Overlay shape on base image
             add = cv2.addWeighted(padshape, alpha, add, 1-alpha, 0)
         add_l.append(add)

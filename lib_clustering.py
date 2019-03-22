@@ -4,7 +4,12 @@ from lib_images import *
 import matplotlib.pyplot as plt
 from sklearn.cluster import KMeans
 
+# ----------------------------------------------------------------------------
 def maxdim(shapes):
+    '''
+    Global function to determine the maximum height and the maximum width of
+      all the shapes in a directory.
+    '''
     maxh = 0
     maxw = 0
     for shape in shapes:
@@ -13,18 +18,27 @@ def maxdim(shapes):
         if shape.w > maxw:
             maxw = shape.w
     return(maxh,maxw)
+# ----------------------------------------------------------------------------
 
+
+# ----------------------------------------------------------------------------
 def kmeans(shapes,k=4):
+    '''
+    Run kmeans clustering on flattened shape images
+    '''
     #prepare shapes
     maxh,maxw = maxdim(shapes)
     for shape in shapes:
         shape.pad(maxh,maxw)
         shape.flatten()
+
     rows = [shape.flat for shape in shapes]
 
     Z = np.stack(rows)
     Z = np.float32(Z)
 
+    #uncomment these lines to run elbow method to determine the
+    #best number of clusters for kmeans
     '''
     Elbow Method:
     Sum_of_squared_distances = []
@@ -42,6 +56,7 @@ def kmeans(shapes,k=4):
     plt.show()
     '''
 
+    #run kmeans
     criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 10, 1.0)
     ret,label,center=cv2.kmeans(Z,k,None,criteria,10,cv2.KMEANS_RANDOM_CENTERS)
 
@@ -50,3 +65,4 @@ def kmeans(shapes,k=4):
         shapes[i].setLabel(label[i])
 
     return(ret,label,center)
+# ----------------------------------------------------------------------------
